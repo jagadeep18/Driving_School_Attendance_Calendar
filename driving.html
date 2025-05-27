@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Attendance Calendar</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #0d0d0d, #1a1a1a, #262626, #0f0f0f);
+      color: #0f0;
+      overflow: hidden;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      max-width: 800px;
+      margin: 20px auto;
+    }
+
+    .day, .date {
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .day {
+      background-color: #111;
+      font-weight: bold;
+    }
+
+    .date {
+      background-color: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      cursor: pointer;
+    }
+
+    .attended {
+      background-color: green !important;
+      color: white !important;
+    }
+
+    .not-attended {
+      background-color: crimson !important;
+      color: white !important;
+    }
+
+    select {
+      margin: 10px;
+      padding: 5px;
+      background-color: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+    }
+
+    .auth-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, #000 60%, #111 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 10;
+    }
+
+    .auth-screen input {
+      padding: 10px;
+      font-size: 18px;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+
+    .auth-screen button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #0f0;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-screen" id="authScreen">
+  <h2 style="color: #0f0;">Enter Password</h2>
+  <input type="password" id="passwordInput" placeholder="Password">
+  <button onclick="checkPassword()">Unlock</button>
+</div>
+
+<div id="mainContent" class="hidden">
+  <h1>Attendance Calendar</h1>
+  <div>
+    <select id="monthSelect"></select>
+    <select id="yearSelect"></select>
+  </div>
+
+  <div class="calendar" id="calendar"></div>
+</div>
+
+<script>
+  const correctPassword = "Chinnu@13579";
+
+  function checkPassword() {
+    const input = document.getElementById("passwordInput").value;
+    if (input === correctPassword) {
+      document.getElementById("authScreen").style.display = "none";
+      document.getElementById("mainContent").classList.remove("hidden");
+    } else {
+      alert("Wrong password!");
+    }
+  }
+
+  const monthSelect = document.getElementById("monthSelect");
+  const yearSelect = document.getElementById("yearSelect");
+  const calendar = document.getElementById("calendar");
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  for (let m = 0; m < 12; m++) {
+    const option = document.createElement("option");
+    option.value = m;
+    option.text = new Date(0, m).toLocaleString("default", { month: "long" });
+    monthSelect.appendChild(option);
+  }
+
+  const thisYear = new Date().getFullYear();
+  for (let y = thisYear - 5; y <= thisYear + 5; y++) {
+    const option = document.createElement("option");
+    option.value = y;
+    option.text = y;
+    yearSelect.appendChild(option);
+  }
+
+  monthSelect.value = new Date().getMonth();
+  yearSelect.value = new Date().getFullYear();
+
+  function renderCalendar() {
+    const year = parseInt(yearSelect.value);
+    const month = parseInt(monthSelect.value);
+    calendar.innerHTML = "";
+
+    days.forEach(day => {
+      const div = document.createElement("div");
+      div.className = "day";
+      div.textContent = day;
+      calendar.appendChild(div);
+    });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const numDays = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement("div");
+      calendar.appendChild(empty);
+    }
+
+    for (let d = 1; d <= numDays; d++) {
+      const dateDiv = document.createElement("div");
+      dateDiv.className = "date";
+      const dateKey = `${year}-${month + 1}-${d}`;
+      const status = localStorage.getItem(dateKey);
+
+      if (status === "attended") dateDiv.classList.add("attended");
+      else if (status === "not-attended") dateDiv.classList.add("not-attended");
+
+      dateDiv.textContent = d;
+      dateDiv.addEventListener("click", () => {
+        let current = localStorage.getItem(dateKey);
+        if (current === "attended") {
+          localStorage.setItem(dateKey, "not-attended");
+        } else if (current === "not-attended") {
+          localStorage.removeItem(dateKey);
+        } else {
+          localStorage.setItem(dateKey, "attended");
+        }
+        renderCalendar();
+      });
+
+      calendar.appendChild(dateDiv);
+    }
+  }
+
+  monthSelect.addEventListener("change", renderCalendar);
+  yearSelect.addEventListener("change", renderCalendar);
+
+  renderCalendar();
+</script>
+
+</body>
+</html>
